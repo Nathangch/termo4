@@ -14,30 +14,30 @@
 <body>
     <header>
         <div class="header-left">
-            <!-- Termo Sub-Selector (Visible only in Termo modes) -->
-            <div id="termo-selector" class="dropdown-container hidden">
-                <button id="current-termo-mode">TERMO <span class="arrow">▼</span></button>
+            <button id="main-menu-btn" aria-label="Menu de Modos">☰</button>
+            <div id="termo-selector" class="dropdown">
+                <button id="current-termo-mode" class="dropdown-btn">TERMO <span class="arrow">▼</span></button>
                 <div id="termo-options" class="dropdown-content hidden">
                     <button class="sub-mode-btn" data-mode="1">TERMO</button>
                     <button class="sub-mode-btn" data-mode="2">DUETO</button>
                     <button class="sub-mode-btn" data-mode="4">QUARTETO</button>
                 </div>
             </div>
-
-            <!-- Crossword Sub-Selector (Visible only in Crossword modes) -->
-            <div id="crossword-selector" class="dropdown-container hidden">
-                <button id="current-crossword-mode">LETRAS <span class="arrow">▼</span></button>
+            <div id="crossword-selector" class="dropdown hidden">
+                <button id="current-crossword-mode" class="dropdown-btn">LETRAS <span class="arrow">▼</span></button>
                 <div id="crossword-options" class="dropdown-content hidden">
                     <button class="cw-sub-mode-btn" data-mode="crossword">LETRAS</button>
                     <button class="cw-sub-mode-btn" data-mode="exact-crossword">NÚMEROS</button>
                 </div>
             </div>
         </div>
-        <h1>TERMO</h1>
+        <div class="header-center">
+            <h1>TERMO</h1>
+            <button id="header-finish-btn" class="hidden" aria-label="Validar">✔</button>
+        </div>
         <div class="header-right">
-            <button id="help-btn" aria-label="Como jogar">?</button>
-            <button id="stats-btn" aria-label="Estatísticas">📊</button>
-            <!-- Oculto inicialmente -->
+            <button id="help-btn" class="header-btn" aria-label="Como jogar">?</button>
+            <button id="stats-btn" class="header-btn" aria-label="Estatísticas">📊</button>
         </div>
     </header>
 
@@ -60,6 +60,16 @@
 
     <!-- Floating Controls for Crossword -->
     <div id="cw-floating-controls"></div>
+
+    <button id="floating-hints-btn" class="hidden" aria-label="Ver Dicas">💡</button>
+
+    <div id="hints-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" id="close-hints-modal">&times;</span>
+            <h2 id="hints-modal-title">DICAS</h2>
+            <div id="hints-modal-content"></div>
+        </div>
+    </div>
 
     <!-- Modals -->
     <div id="modal-overlay" class="hidden"></div>
@@ -116,37 +126,49 @@
                 <p>Complete o diagrama preenchendo as palavras corretas de acordo com as dicas.</p>
 
                 <div class="examples">
-                    <p>• <strong>Selecionar:</strong> Clique em uma célula ou na dica à direita para selecionar uma
-                        palavra.</p>
-                    <p>• <strong>Digitar:</strong> Use o teclado para preencher as letras. O foco avança
-                        automaticamente.</p>
-                    <p>• <strong>Navegar:</strong> Use as setas do teclado para se mover pelo grid ou clique para mudar
-                        a direção (Horizontal/Vertical).</p>
-                    <p>• <strong>Dicas:</strong> Quando você preenche uma palavra corretamente, a pergunta
-                        correspondente na lista é riscada.</p>
-                    <p>• <strong>Verificar:</strong> Use o botão de check (✔) flutuante para validar todo o jogo.</p>
+                    <p>• <strong>Selecionar:</strong> Clique em uma célula ou na dica à direita para selecionar uma palavra.</p>
+                    <p>• <strong>Digitar:</strong> Use o teclado para preencher as letras. O foco avança automaticamente.</p>
+                    <p>• <strong>Navegar:</strong> Use as setas do teclado para se mover pelo grid ou clique para mudar a direção (Horizontal/Vertical).</p>
                 </div>
 
                 <p class="footnote">Não há limite de tentativas nas Palavras Cruzadas.</p>
             </div>
 
-        </div>
+            <div id="help-content-exact-crossword" class="hidden">
+                <p>Preencha os números corretos no diagrama.</p>
 
-        <div id="help-content-sudoku" class="hidden">
-            <p>Preencha o grid 9x9 com números de 1 a 9.</p>
+                <div class="examples">
+                    <p>• <strong>Regras:</strong> Use os números disponíveis no teclado para preencher as células vazias.</p>
+                    <p>• <strong>Validar:</strong> Clique no botão ✔ flutuante para verificar seus acertos.</p>
+                </div>
 
-            <div class="examples">
-                <p>• <strong>Regras:</strong> Cada linha, coluna e bloco 3x3 deve conter todos os números de 1 a 9 sem
-                    repetições.</p>
-                <p>• <strong>Âncoras:</strong> Alguns números já estão fixos no grid e não podem ser alterados.</p>
-                <p>• <strong>Selecionar:</strong> Clique em uma célula para selecioná-la e use o teclado para inserir o
-                    número.</p>
-                <p>• <strong>Validar:</strong> Clique no botão ✔ para verificar se sua solução está correta.</p>
+                <p class="footnote">Neste modo, apenas números são aceitos.</p>
             </div>
 
-            <p class="footnote">Sudoku é um jogo de lógica, não de matemática.</p>
+            <div id="help-content-sudoku" class="hidden">
+                <p>Preencha o grid 9x9 com números de 1 a 9.</p>
+
+                <div class="examples">
+                    <p>• <strong>Regras:</strong> Cada linha, coluna e bloco 3x3 deve conter todos os números de 1 a 9 sem repetições.</p>
+                    <p>• <strong>Âncoras:</strong> Alguns números já estão fixos no grid e não podem ser alterados.</p>
+                    <p>• <strong>Selecionar:</strong> Clique em uma célula para selecioná-la e use o teclado para inserir o número.</p>
+                </div>
+
+                <p class="footnote">Sudoku é um jogo de lógica, não de matemática.</p>
+            </div>
+
+            <div id="help-content-math" class="hidden">
+                <p>Descubra a equação matemática em 6 tentativas.</p>
+                <p>Cada tentativa deve ser uma equação válida. Ex: <strong>3+4*5=23</strong></p>
+
+                <div class="examples">
+                    <p>• <strong>Cálculo:</strong> Use os números (0-9) e operadores (+, -, *, /) para formar uma equação que resulte no valor após o sinal de igual (=).</p>
+                    <p>• <strong>Cores:</strong> As cores indicam se os números e símbolos estão na posição correta, na posição errada ou se não fazem parte da equação.</p>
+                </div>
+
+                <p class="footnote">O resultado do cálculo deve ser um número inteiro.</p>
+            </div>
         </div>
-    </div>
     </div>
 
     <div id="stats-modal" class="modal hidden">
@@ -191,10 +213,6 @@
         </div>
     </div>
 
-    <!-- Menu Button (Bottom Left) -->
-    <button id="main-menu-btn" aria-label="Menu de Modos">
-        ☰
-    </button>
 
     <!-- Games Mode Modal -->
     <div id="games-modal" class="modal hidden">
@@ -214,6 +232,10 @@
             <button class="game-mode-option" data-mode="sudoku">
                 <span class="icon">🔢</span>
                 <span class="name">SUDOKU</span>
+            </button>
+            <button class="game-mode-option" data-mode="math">
+                <span class="icon">➗</span>
+                <span class="name">MATEMÁTICA</span>
             </button>
         </div>
     </div>

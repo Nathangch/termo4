@@ -36,6 +36,7 @@ body {
     justify-content: flex-start;
     height: 100vh;
     overflow: hidden;
+    overflow-x: hidden;
 }
 
 /* Header */
@@ -56,24 +57,85 @@ header h1 {
     font-size: 2rem;
     letter-spacing: 4px;
     margin: 0;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+    text-align: center;
+    line-height: 1;
+}
+
+/* Global utility to hide elements */
+.hidden {
+    display: none !important;
+}
+
+/* Hide static hint panels removed - now handled by media queries */
+
+@media (max-width: 600px) {
+    header h1 {
+        font-size: clamp(0.9rem, 4.5vw, 1.4rem);
+        letter-spacing: 1px;
+        white-space: nowrap;
+    }
 }
 
 .header-left,
+.header-center,
 .header-right {
     display: flex;
     align-items: center;
-    gap: 10px;
     z-index: 10;
 }
 
 .header-left {
-    position: relative;
-    width: 200px;
-    /* Mais espaço para o menu */
+    flex: 1;
     justify-content: flex-start;
+    gap: 10px;
+}
+
+.header-center {
+    flex: 2;
+    justify-content: center;
+    gap: 12px;
+}
+
+.header-right {
+    flex: 1;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+#header-finish-btn {
+    background-color: var(--color-correct);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+#header-finish-btn:hover {
+    transform: scale(1.1);
+    background-color: #3aa394;
+}
+
+@media (max-width: 600px) {
+    .header-left, .header-right {
+        flex: 0 0 auto;
+        gap: 5px;
+    }
+    .header-center {
+        flex: 1;
+        min-width: 0; /* Permite que o título encolha com ellipsis se necessário */
+    }
+    header h1 {
+        font-size: clamp(0.7rem, 4.5vw, 1.25rem);
+        letter-spacing: 0.5px;
+        line-height: 0.9;
+    }
 }
 
 #mode-toggle {
@@ -147,16 +209,17 @@ header h1 {
 }
 
 /* Termo Dropdown Selector */
-.dropdown-container {
+.dropdown {
     position: relative;
     display: inline-block;
 }
 
-.dropdown-container.hidden {
+.dropdown.hidden {
     display: none !important;
 }
 
-#current-termo-mode {
+#current-termo-mode,
+#current-crossword-mode {
     background: rgba(0, 0, 0, 0.3);
     color: white;
     padding: 8px 12px;
@@ -180,7 +243,6 @@ header h1 {
     top: 100%;
     left: 0;
     background-color: var(--modal-bg);
-    /* Changed from var(--color-bg) to var(--modal-bg) for consistency */
     min-width: 120px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
     border-radius: 8px;
@@ -197,7 +259,7 @@ header h1 {
     display: none;
 }
 
-.sub-mode-btn {
+.sub-mode-btn, .cw-sub-mode-btn {
     background: transparent;
     border: none;
     color: var(--color-text);
@@ -210,12 +272,15 @@ header h1 {
     width: 100%;
 }
 
-.sub-mode-btn:hover {
+.sub-mode-btn:hover, .cw-sub-mode-btn:hover {
     background-color: #3a3a3a;
 }
 
-/* Crossword Dropdown Selector */
-#current-crossword-mode {
+.sub-mode-btn.active, .cw-sub-mode-btn.active {
+    color: var(--color-correct);
+}
+
+#current-termo-mode, #current-crossword-mode {
     background: rgba(0, 0, 0, 0.3);
     color: white;
     padding: 8px 12px;
@@ -228,6 +293,10 @@ header h1 {
     align-items: center;
     gap: 8px;
     transition: background 0.2s;
+}
+
+.sub-mode-btn:hover, .cw-sub-mode-btn:hover {
+    background-color: #3a3a3a;
 }
 
 #current-crossword-mode:hover {
@@ -271,23 +340,36 @@ header h1 {
 }
 
 #help-btn,
-#stats-btn {
+#stats-btn,
+#main-menu-btn,
+#header-finish-btn {
     background: none;
     border: 2px solid #4c4347;
     color: var(--color-text);
     font-size: 1.2rem;
     cursor: pointer;
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: background-color 0.2s, transform 0.2s;
+    padding: 0;
 }
 
 #help-btn:hover,
-#stats-btn:hover {
+#stats-btn:hover,
+#main-menu-btn:hover,
+#header-finish-btn:hover {
     background-color: #4c4347;
+    transform: scale(1.05);
+}
+
+#header-finish-btn {
+    border-color: var(--color-correct);
+    color: var(--color-correct);
+    font-size: 1.4rem;
 }
 
 /* Game Container - Layout Dinâmico */
@@ -323,6 +405,17 @@ header h1 {
     --block-size: 65px;
     --gap-size: 6px;
     --font-size-tile: 2.2rem;
+}
+
+/* Modo Math: 8 Colunas */
+.boards-math {
+    grid-template-columns: 1fr;
+    --cols: 8;
+    --block-size: min(45px, 6vh);
+    --gap-size: 5px;
+    --font-size-tile: 1.5rem;
+    max-width: 500px;
+    margin: 0 auto;
 }
 
 /* Modo 2: 2 Colunas */
@@ -364,12 +457,13 @@ header h1 {
 /* Ajuste específico para mobile no Quarteto */
 @media (max-width: 600px) {
     .boards-4 {
-        gap: 3px !important;
-        /* Gap ainda menor para caber mais tile */
-        --block-size: min(22px, 3vh, 4.5vw);
-        /* Maximize mobile width too */
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px !important;
+        --block-size: min(15px, 2.6vh, 4.3vw);
         --gap-size: 2px;
-        --font-size-tile: 11px;
+        --font-size-tile: 0.65rem;
+        max-width: 98vw;
+        padding: 5px;
     }
 }
 
@@ -396,7 +490,7 @@ header h1 {
 
 .row {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(var(--cols, 5), 1fr);
     grid-gap: var(--gap-size);
 }
 
@@ -811,33 +905,7 @@ header h1 {
 
 
 /* Floating Menu Button */
-#main-menu-btn {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    width: 60px;
-    /* Slightly larger area */
-    height: 60px;
-    border-radius: 50%;
-    background-color: var(--color-correct);
-    color: white;
-    font-size: 1.8rem;
-    border: none;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-    cursor: pointer;
-    z-index: 2000;
-    /* High z-index to ensure clickability */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.2s, background-color 0.2s;
-}
-
-#main-menu-btn:hover {
-    transform: scale(1.1);
-    background-color: #3aa394;
-    /* Lighter shade */
-}
+/* Removed floating FAB menu button - integrated into header */
 
 /* Game Mode Options in Modal */
 .display-grid-menu {
@@ -900,28 +968,31 @@ header h1 {
 /* --- Classic Grid Styling --- */
 .crossword-grid {
     display: grid;
-    /* Grid structure handled by JS */
-    gap: 1px;
-    /* The 'border' between cells */
-    background-color: #000;
-    border: 4px solid #000;
-    width: max-content;
-    max-width: 100%;
-    /* No border-radius for classic look */
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    gap: 0;
+    background-color: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    width: 80vw;
+    max-width: 540px;
+    margin: 0 auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
 }
 
 .cw-cell {
-    width: 40px;
-    height: 40px;
+    aspect-ratio: 1;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
     position: relative;
-    /* Default: Black Block */
-    background-color: #000;
+    overflow: hidden;
+    /* Empty outlines */
+    background-color: var(--bg-color);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     color: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    font-size: clamp(0.6rem, 2.5vw, 1.2rem);
     font-weight: bold;
     text-transform: uppercase;
     user-select: none;
@@ -931,6 +1002,7 @@ header h1 {
 .cw-cell.active-word {
     background-color: #fff;
     color: #000;
+    border: 1px solid #777; /* Explicit division between white cells */
     cursor: pointer;
 }
 
@@ -1026,6 +1098,8 @@ header h1 {
     display: flex;
     gap: 8px;
     color: #333;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .hint-item:hover {
@@ -1042,6 +1116,21 @@ header h1 {
     text-decoration: line-through;
     opacity: 0.5;
     color: #888;
+}
+
+/* Modal specific overrides for hints (Dark Mode) */
+#hints-modal-content .hint-item {
+    color: #fff;
+}
+
+#hints-modal-content .hint-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+#hints-modal-content .hint-item.active-hint {
+    background-color: rgba(33, 150, 243, 0.2);
+    color: #fff;
+    border-left: 4px solid #2196f3;
 }
 
 .hint-item.resolved .hint-num {
@@ -1093,6 +1182,20 @@ header h1 {
         flex-direction: column;
         align-items: center;
         gap: 20px;
+        width: 100%;
+        max-width: 100vw;
+        overflow: hidden;
+        padding: 80px 10px 20px 10px;
+        box-sizing: border-box;
+    }
+
+    /* Hide static side panels on mobile, favouring floating buttons */
+    .hints-panel, .cw-right-col {
+        display: none !important;
+    }
+
+    .crossword-grid {
+        margin: 0 auto;
     }
 
     .cw-right-col {
@@ -1100,8 +1203,31 @@ header h1 {
         max-width: 500px;
     }
 
+    /* Mirror the floating hints button with a floating confirmation button on the left */
+    #header-finish-btn {
+        position: fixed !important;
+        left: 20px !important;
+        top: 90px !important;
+        width: 45px !important;
+        height: 45px !important;
+        border-radius: 50% !important;
+        background: var(--color-correct) !important;
+        color: #fff !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+        z-index: 999 !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem !important;
+        border: 2px solid rgba(255,255,255,0.2) !important;
+        cursor: pointer !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
     .cw-hints-panel {
         max-height: 300px;
+        width: 100%;
     }
 }
 
@@ -1109,24 +1235,28 @@ header h1 {
 
     /* Crossword Mobile */
     .cw-cell {
-        width: 28px;
-        height: 28px;
-        font-size: 0.8rem;
+        width: min(24px, 7vw);
+        height: min(24px, 7vw);
+        font-size: clamp(0.6rem, 2.5vw, 0.8rem);
     }
 
     .cw-finish-btn {
-        width: 55px;
-        height: 55px;
-        bottom: 20px;
-        right: 20px;
+        width: 50px;
+        height: 50px;
+        bottom: auto;
+        top: 70px;
+        right: 10px;
+        font-size: 1.5rem;
     }
 
-    /* Termo Boards Mobile */
     .boards-4 {
-        gap: 2px !important;
-        --block-size: min(20px, 3.5vh, 4.5vw);
+        grid-template-columns: repeat(2, 1fr);
+        gap: 25px !important;
+        --block-size: min(22px, 3.5vh, 6.5vw);
         --gap-size: 2px;
-        --font-size-tile: 11px;
+        --font-size-tile: 0.95rem;
+        max-width: 85vw;
+        padding: 20px;
     }
 
     .boards-2 {
@@ -1290,4 +1420,53 @@ header h1 {
 .sudoku-cell:nth-child(n+19):nth-child(-n+27),
 .sudoku-cell:nth-child(n+46):nth-child(-n+54) {
     border-bottom: 2px solid #fff;
+}
+
+#hints-modal .modal-content {
+    max-width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+#hints-modal-content {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#floating-hints-btn {
+    position: fixed;
+    right: 20px;
+    top: 90px;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: #444;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    border: 2px solid #555;
+    cursor: pointer;
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+#floating-hints-btn:hover {
+    transform: scale(1.1);
+    background-color: #555;
+}
+
+#floating-hints-btn.hidden {
+    display: none;
+}
+
+/* Hide floating hints button on desktop */
+@media (min-width: 851px) {
+    #floating-hints-btn {
+        display: none !important;
+    }
 }

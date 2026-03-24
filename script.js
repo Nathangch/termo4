@@ -10,10 +10,10 @@ function normalizeWord(word) {
  * Pode haver 1, 2 ou 4 instâncias dessa classe ativas.
  */
 class Board {
-    constructor(id, totalRows, secretWord) {
+    constructor(id, totalRows, secretWord, cols = 5) {
         this.id = id;
         this.ROWS = totalRows;
-        this.COLS = 5;
+        this.COLS = cols;
         this.secretWord = secretWord;
         this.gridState = Array(this.ROWS).fill(null).map(() => Array(this.COLS).fill(""));
         this.currentRow = 0;
@@ -166,6 +166,7 @@ class Game {
         // Elementos UI
         this.boardsContainer = document.getElementById('boards-container');
         this.keyboardContainer = document.getElementById('keyboard');
+        this.headerFinishBtn = document.getElementById('header-finish-btn');
 
         // Inicializa listeners
         this.initListeners();
@@ -179,8 +180,10 @@ class Game {
             1: { played: 0, won: 0, streak: 0, maxStreak: 0, dist: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, fail: 0 } },
             2: { played: 0, won: 0, streak: 0, maxStreak: 0, dist: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, fail: 0 } },
             4: { played: 0, won: 0, streak: 0, maxStreak: 0, dist: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, fail: 0 } },
-            'crossword': { played: 0, won: 0 }, // Simple stats for CW
-            'sudoku': { played: 0, won: 0 }
+            'math': { played: 0, won: 0, streak: 0, maxStreak: 0, dist: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, fail: 0 } },
+            'crossword': { played: 0, won: 0, streak: 0, maxStreak: 0, dist: {} },
+            'exact-crossword': { played: 0, won: 0, streak: 0, maxStreak: 0, dist: {} },
+            'sudoku': { played: 0, won: 0, streak: 0, maxStreak: 0, dist: {} }
         };
         const stored = localStorage.getItem('termoMultiStats');
         return stored ? { ...defaultStats, ...JSON.parse(stored) } : defaultStats;
@@ -199,7 +202,7 @@ class Game {
         const headerLeft = document.querySelector('.header-left');
         const modeToggle = document.getElementById('mode-toggle');
 
-        if (n === 'crossword' || n === 'exact-crossword' || n === 'sudoku') {
+        if (n === 'crossword' || n === 'exact-crossword' || n === 'sudoku' || n === 'math') {
             this.mode = n;
         } else {
             this.mode = parseInt(n);
@@ -217,12 +220,24 @@ class Game {
             this.maxAttempts = this.mode === 1 ? 6 : (this.mode === 2 ? 7 : 9);
         }
 
+        if (this.mode === 'math') this.maxAttempts = 6;
+
         // Update Header Title
         const headerTitle = document.querySelector('header h1');
+        const finishBtn = document.getElementById('header-finish-btn');
+        
         if (headerTitle) {
-            if (this.mode === 'crossword' || this.mode === 'exact-crossword') headerTitle.textContent = 'PALAVRAS CRUZADAS';
+            if (this.mode === 'crossword') headerTitle.innerHTML = 'PALAVRAS<br>CRUZADAS';
+            else if (this.mode === 'exact-crossword') headerTitle.innerHTML = 'NÚMEROS<br>CRUZADOS';
             else if (this.mode === 'sudoku') headerTitle.textContent = 'SUDOKU';
+            else if (this.mode === 'math') headerTitle.textContent = 'MATEMÁTICA';
             else headerTitle.textContent = 'TERMO';
+        }
+
+        // Show finish button only for modes that require validation
+        if (finishBtn) {
+            const needsValidation = this.mode === 'crossword' || this.mode === 'exact-crossword' || this.mode === 'sudoku';
+            finishBtn.classList.toggle('hidden', !needsValidation);
         }
 
         // Manage Header Selectors Visibility
@@ -231,14 +246,23 @@ class Game {
         const isCrossword = this.mode === 'crossword' || this.mode === 'exact-crossword';
         const isTermo = typeof this.mode === 'number';
 
-        if (termoSelector) termoSelector.classList.toggle('hidden', !!isCrossword || this.mode === 'sudoku');
+        if (termoSelector) termoSelector.classList.toggle('hidden', isCrossword || this.mode === 'sudoku' || this.mode === 'math');
         if (cwSelector) {
             cwSelector.classList.toggle('hidden', !isCrossword);
+            // Show hints button for crossword modes
+            const hintsBtn = document.getElementById('floating-hints-btn');
+            if (hintsBtn) {
+                hintsBtn.classList.toggle('hidden', !isCrossword);
+            }
             // Update Label
             const cwLabel = document.getElementById('current-crossword-mode');
             if (cwLabel) {
                 cwLabel.innerHTML = `${this.mode === 'crossword' ? 'LETRAS' : 'NÚMEROS'} <span class="arrow">▼</span>`;
             }
+        }
+
+        if (this.headerFinishBtn) {
+            this.headerFinishBtn.classList.toggle('hidden', !isCrossword && this.mode !== 'sudoku');
         }
 
         // Close Bottom Menu implicitly
@@ -277,7 +301,11 @@ class Game {
             return;
         } else {
             if (termoSelector) {
-                termoSelector.classList.remove('hidden');
+                if (this.mode === 'math') {
+                    termoSelector.classList.add('hidden');
+                } else {
+                    termoSelector.classList.remove('hidden');
+                }
 
                 // Update Label Text
                 const currentLabel = document.getElementById('current-termo-mode');
@@ -289,20 +317,40 @@ class Game {
         }
 
         // Ajusta classes de CSS container
-        this.boardsContainer.className = `boards-${this.mode}`;
-
-        // Cria boards
-        for (let i = 0; i < this.mode; i++) {
-            const secret = normalizeWord(WORDS[Math.floor(Math.random() * WORDS.length)]);
-            console.log(`Board ${i} Secret:`, secret);
-            const board = new Board(i, this.maxAttempts, secret);
+        if (this.mode === 'math') {
+            this.boardsContainer.className = 'boards-math';
+            const secret = this.generateMathEquation();
+            console.log("Math Secret:", secret);
+            const board = new Board(0, 6, secret, 8);
             board.render(this.boardsContainer);
             this.boards.push(board);
+        } else {
+            this.boardsContainer.className = `boards-${this.mode}`;
+
+            // Cria boards
+            for (let i = 0; i < this.mode; i++) {
+                const secret = normalizeWord(WORDS[Math.floor(Math.random() * WORDS.length)]);
+                console.log(`Board ${i} Secret:`, secret);
+                const board = new Board(i, this.maxAttempts, secret);
+                board.render(this.boardsContainer);
+                this.boards.push(board);
+            }
         }
 
         this.createKeyboard();
         this.updateFocus();
         this.startCountdown();
+    }
+
+    generateMathEquation() {
+        const pool = [
+            "12+3-8=7", "4*6-3=21", "18/2-3=6", "98-25=73", "88-25=63",
+            "45+32=77", "9*8-12=60", "50/5+2=12", "100/4=25", "7*7+1=50",
+            "3+4*5=23", "15+15=30", "99-11=88", "12*4+2=50", "81/9+1=10",
+            "10*5-1=49", "6*6+4=40", "2+3*4=14", "20/4+5=10", "15-3*4=3"
+        ];
+        const validPool = pool.filter(eq => eq.length === 8);
+        return validPool[Math.floor(Math.random() * validPool.length)].toUpperCase();
     }
 
 
@@ -313,8 +361,8 @@ class Game {
         // --- Grid ---
         const gridEl = document.createElement('div');
         gridEl.className = 'crossword-grid';
-        gridEl.style.gridTemplateColumns = `repeat(${this.cwGrid.cols}, 1fr)`;
-        gridEl.style.gridTemplateRows = `repeat(${this.cwGrid.rows}, 1fr)`;
+        gridEl.style.gridTemplateColumns = `repeat(${this.cwGrid.cols}, minmax(0, 1fr))`;
+        gridEl.style.gridTemplateRows = `repeat(${this.cwGrid.rows}, minmax(0, 1fr))`;
         // Width is handled by CSS (max-content) now to respect padding
 
         this.cwGrid.element = gridEl;
@@ -409,17 +457,7 @@ class Game {
 
         rightCol.appendChild(hintsPanel);
 
-        // --- Finish Button (Floating) ---
-        const controlsContainer = document.getElementById('cw-floating-controls');
-        if (controlsContainer) {
-            controlsContainer.innerHTML = ''; // Clear previous
-            const finishBtn = document.createElement('button');
-            finishBtn.className = 'cw-finish-btn';
-            finishBtn.innerHTML = '✔';
-            finishBtn.title = "Finalizar";
-            finishBtn.addEventListener('click', () => this.validateCrossword());
-            controlsContainer.appendChild(finishBtn);
-        }
+        // Finish Button is now in the header
 
         wrapper.appendChild(rightCol);
 
@@ -595,9 +633,56 @@ class Game {
             this.renderStats();
             openModal('stats-modal');
         });
+
+        const hintsBtn = document.getElementById('floating-hints-btn');
+        if (hintsBtn) {
+            hintsBtn.addEventListener('click', () => {
+                // Populate hints modal content based on current mode
+                if (this.mode === 'crossword') {
+                    this.populateCrosswordHintsModal();
+                } else if (this.mode === 'exact-crossword') {
+                    this.populateExactCrosswordHintsModal();
+                }
+                openModal('hints-modal');
+            });
+        }
+
+        const closeHintsBtn = document.getElementById('close-hints-modal');
+        if (closeHintsBtn) {
+            closeHintsBtn.addEventListener('click', () => {
+                document.getElementById('hints-modal').classList.add('hidden');
+                document.getElementById('modal-overlay').classList.add('hidden');
+            });
+        }
         document.getElementById('share-btn').addEventListener('click', () => this.shareResult());
         document.querySelectorAll('.close-btn').forEach(b => b.addEventListener('click', closeModal));
         document.getElementById('modal-overlay').addEventListener('click', closeModal);
+
+        // Header Finish Button
+        if (this.headerFinishBtn) {
+            this.headerFinishBtn.addEventListener('click', () => {
+                if (this.mode === 'sudoku') this.validateSudoku();
+                else if (this.mode === 'crossword' || this.mode === 'exact-crossword') this.validateCrossword();
+            });
+        }
+    }
+
+    validateCrossword() {
+        if (this.mode === 'exact-crossword') {
+            this.validateExactCrossword();
+        } else {
+            this.checkExactWin(true);
+        }
+    }
+
+    handleTileClick(boardId, row, col) {
+        if (this.isGameOver) return;
+        const board = this.boards[boardId];
+        // Permite mudar o foco apenas se clicar na linha atual do tabuleiro ativo
+        if (board && !board.isSolved && !board.isFailed && row === board.currentRow) {
+            this.currentCol = col;
+            this.updateFocus();
+        }
     }
 
     handlePhysicalKeyboard(e) {
@@ -638,11 +723,17 @@ class Game {
 
         if (key === 'Enter') this.submitGuess();
         else if (key === 'Backspace') this.deleteLetter();
+        else if (this.mode === 'math') {
+            if (/^[0-9+\-*/=]$/.test(key)) this.addLetter(key.toUpperCase());
+        }
         else if (/^[a-zA-Z]$/.test(key)) this.addLetter(key.toUpperCase());
         else if (key === 'ArrowLeft') {
+            e.preventDefault();
             if (this.currentCol > 0) { this.currentCol--; this.updateFocus(); }
         } else if (key === 'ArrowRight') {
-            if (this.currentCol < 5 - 1) { this.currentCol++; this.updateFocus(); }
+            e.preventDefault();
+            const cols = this.mode === 'math' ? 8 : 5;
+            if (this.currentCol < cols - 1) { this.currentCol++; this.updateFocus(); }
         }
     }
 
@@ -903,7 +994,8 @@ class Game {
             }
         });
 
-        if (inserted && this.currentCol < 4) {
+        const maxCol = (this.boards[0] && this.boards[0].COLS) ? this.boards[0].COLS - 1 : 4;
+        if (inserted && this.currentCol < maxCol) {
             this.currentCol++;
             this.updateFocus();
         } else if (inserted) {
@@ -943,20 +1035,55 @@ class Game {
         const guessArray = activeBoard.gridState[activeBoard.currentRow];
         const guessWord = guessArray.join("");
 
-        if (guessWord.length !== 5 || guessArray.includes("")) {
-            showMessage("Só palavras com 5 letras");
-            this.shakeActiveRows();
-            return;
-        }
-
-        if (!this.isValidWord(guessWord)) {
-            showMessage("Palavra não aceita");
-            this.shakeActiveRows();
-            return;
+        if (this.mode === 'math') {
+            if (guessWord.length !== 8 || guessArray.includes("")) {
+                showMessage("A equação deve ter 8 caracteres");
+                this.shakeActiveRows();
+                return;
+            }
+            if (!this.isValidEquation(guessWord)) {
+                showMessage("Equação inválida");
+                this.shakeActiveRows();
+                return;
+            }
+        } else {
+            if (guessWord.length !== 5 || guessArray.includes("")) {
+                showMessage("Só palavras com 5 letras");
+                this.shakeActiveRows();
+                return;
+            }
+            if (!this.isValidWord(guessWord)) {
+                showMessage("Palavra não aceita");
+                this.shakeActiveRows();
+                return;
+            }
         }
 
         // Processa guess
         this.processTurn(guessWord);
+    }
+
+    isValidEquation(guess) {
+        if (!guess.includes('=')) return false;
+        const parts = guess.split('=');
+        if (parts.length !== 2) return false;
+        const expression = parts[0];
+        const result = parts[1];
+        if (!expression || !result) return false;
+        
+        // Basic check for double operators
+        if (/[+\-*/]{2,}/.test(expression)) return false;
+        // Basic check for starting/ending with operators
+        if (/^[+\-*/]/.test(expression) || /[+\-*/]$/.test(expression)) return false;
+
+        try {
+            // Replace 08 with 8 to avoid octal issues in some JS engines
+            const sanitizedExpr = expression.replace(/\b0+(?=\d)/g, '');
+            const evalResult = new Function(`return ${sanitizedExpr}`)();
+            return evalResult.toString() === result.replace(/^0+/, '');
+        } catch (e) {
+            return false;
+        }
     }
 
     isValidWord(word) {
@@ -1157,7 +1284,80 @@ class Game {
         this.startCountdown();
     }
 
+    populateCrosswordHintsModal() {
+        const hintsModalContent = document.getElementById('hints-modal-content');
+        if (hintsModalContent) hintsModalContent.innerHTML = '';
+
+        const acrossWords = this.cwGrid.words.filter(w => w.dir === 'across').sort((a, b) => a.id - b.id);
+        const downWords = this.cwGrid.words.filter(w => w.dir === 'down').sort((a, b) => a.id - b.id);
+
+        const populatePanel = (words, title) => {
+            const h3 = document.createElement('h3');
+            h3.textContent = title;
+            hintsModalContent.appendChild(h3);
+            const list = document.createElement('div');
+            list.className = 'hint-list';
+            words.forEach(w => {
+                const item = document.createElement('div');
+                item.className = 'hint-item';
+                item.innerHTML = `<strong>${w.id + 1}.</strong> ${w.clue || 'Sem dica'}`;
+                item.addEventListener('click', () => {
+                    this.cwCursor = { r: w.row, c: w.col };
+                    this.cwDirection = w.dir;
+                    this.updateCrosswordFocus();
+                    if (window.innerWidth <= 600) {
+                        document.getElementById('hints-modal').classList.add('hidden');
+                        document.getElementById('modal-overlay').classList.add('hidden');
+                    }
+                });
+                list.appendChild(item);
+            });
+            hintsModalContent.appendChild(list);
+        };
+
+        populatePanel(acrossWords, 'Horizontais');
+        populatePanel(downWords, 'Verticais');
+    }
+
+    populateExactCrosswordHintsModal() {
+        const hintsModalContent = document.getElementById('hints-modal-content');
+        if (hintsModalContent) hintsModalContent.innerHTML = '';
+
+        const groups = {};
+        this.numberPool.forEach(num => {
+            const len = num.length;
+            if (!groups[len]) groups[len] = [];
+            groups[len].push(num);
+        });
+
+        const sortedLengths = Object.keys(groups).sort((a, b) => a - b);
+        sortedLengths.forEach(len => {
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'number-group';
+            groupDiv.innerHTML = `<h4>${len} DÍGITOS</h4>`;
+            const listDiv = document.createElement('div');
+            listDiv.className = 'number-group-list';
+
+            groups[len].sort().forEach(num => {
+                const item = document.createElement('div');
+                item.className = 'number-item';
+                item.textContent = num;
+                item.dataset.val = num;
+                item.addEventListener('click', () => {
+                    this.handleNumberSelection(num, item);
+                    // On mobile, close modal after selection
+                    document.getElementById('hints-modal').classList.add('hidden');
+                    document.getElementById('modal-overlay').classList.add('hidden');
+                });
+                listDiv.appendChild(item);
+            });
+            groupDiv.appendChild(listDiv);
+            hintsModalContent.appendChild(groupDiv);
+        });
+    }
+
     startExactCrossword() {
+        this.boardsContainer.innerHTML = ''; // Ensure container is clear
         this.boardsContainer.className = '';
         console.log("Starting Exact Crossword...");
 
@@ -1252,8 +1452,8 @@ class Game {
         // --- Grid ---
         const gridEl = document.createElement('div');
         gridEl.className = 'crossword-grid';
-        gridEl.style.gridTemplateColumns = `repeat(${this.cwGrid.cols}, 1fr)`;
-        gridEl.style.gridTemplateRows = `repeat(${this.cwGrid.rows}, 1fr)`;
+        gridEl.style.gridTemplateColumns = `repeat(${this.cwGrid.cols}, minmax(0, 1fr))`;
+        gridEl.style.gridTemplateRows = `repeat(${this.cwGrid.rows}, minmax(0, 1fr))`;
         this.cwGrid.element = gridEl;
 
         for (let r = 0; r < this.cwGrid.rows; r++) {
@@ -1315,16 +1515,7 @@ class Game {
         this.cwHintsPanel = numbersPanel;
         rightCol.appendChild(numbersPanel);
 
-        // --- Finish Button ---
-        const controlsContainer = document.getElementById('cw-floating-controls');
-        if (controlsContainer) {
-            controlsContainer.innerHTML = '';
-            const finishBtn = document.createElement('button');
-            finishBtn.className = 'cw-finish-btn';
-            finishBtn.innerHTML = '✔';
-            finishBtn.addEventListener('click', () => this.validateExactCrossword());
-            controlsContainer.appendChild(finishBtn);
-        }
+        // Finish Button is now in the header
 
         wrapper.appendChild(rightCol);
         this.boardsContainer.appendChild(wrapper);
@@ -1666,11 +1857,13 @@ class Game {
         const cwHelp = document.getElementById('help-content-crossword');
         const exactHelp = document.getElementById('help-content-exact-crossword');
         const sudokuHelp = document.getElementById('help-content-sudoku');
+        const mathHelp = document.getElementById('help-content-math');
 
         if (termoHelp) termoHelp.classList.add('hidden');
         if (cwHelp) cwHelp.classList.add('hidden');
         if (exactHelp) exactHelp.classList.add('hidden');
         if (sudokuHelp) sudokuHelp.classList.add('hidden');
+        if (mathHelp) mathHelp.classList.add('hidden');
 
         if (this.mode === 'crossword') {
             if (cwHelp) cwHelp.classList.remove('hidden');
@@ -1678,6 +1871,8 @@ class Game {
             if (exactHelp) exactHelp.classList.remove('hidden');
         } else if (this.mode === 'sudoku') {
             if (sudokuHelp) sudokuHelp.classList.remove('hidden');
+        } else if (this.mode === 'math') {
+            if (mathHelp) mathHelp.classList.remove('hidden');
         } else {
             if (termoHelp) termoHelp.classList.remove('hidden');
         }
@@ -1688,8 +1883,8 @@ class Game {
         document.getElementById('stat-played').textContent = s.played;
         const pct = s.played > 0 ? Math.round((s.won / s.played) * 100) : 0;
         document.getElementById('stat-win-pct').textContent = pct + '%';
-        document.getElementById('stat-streak').textContent = s.streak;
-        document.getElementById('stat-max-streak').textContent = s.maxStreak;
+        document.getElementById('stat-streak').textContent = s.streak || 0;
+        document.getElementById('stat-max-streak').textContent = s.maxStreak || 0;
 
         const container = document.getElementById('guess-distribution');
         container.innerHTML = '';
@@ -1725,6 +1920,8 @@ class Game {
             layout = ["1234567890", "ENTER BACKSPACE"];
         } else if (this.mode === 'sudoku') {
             layout = ["123456789", "ENTER BACKSPACE"];
+        } else if (this.mode === 'math') {
+            layout = ["1234567890", "+-*/=", "ENTER BACKSPACE"];
         } else {
             layout = ["QWERTYUIOP", "ASDFGHJKL", "ENTER ZXCVBNM BACKSPACE"];
         }
@@ -1979,16 +2176,7 @@ class Game {
 
         wrapper.appendChild(gridEl);
 
-        const controlsContainer = document.getElementById('cw-floating-controls');
-        if (controlsContainer) {
-            controlsContainer.innerHTML = '';
-            const finishBtn = document.createElement('button');
-            finishBtn.className = 'cw-finish-btn';
-            finishBtn.innerHTML = '✔';
-            finishBtn.title = "Finalizar";
-            finishBtn.addEventListener('click', () => this.validateSudoku());
-            controlsContainer.appendChild(finishBtn);
-        }
+        /* Integrated into header */
 
         this.boardsContainer.appendChild(wrapper);
         this.updateSudokuUI();
