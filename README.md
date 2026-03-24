@@ -2,7 +2,7 @@
 
 Uma recriação sofisticada e completa do popular jogo de palavras Termo (Wordle), desenvolvida inteiramente com tecnologias web puras (HTML, CSS e JavaScript). Este projeto oferece múltiplos modos de jogo, desde o clássico desafio de uma palavra até experiências mais complexas como quarteto, palavras cruzadas avançadas e um modo exclusivo de Sudoku e agora também um modo de matemática.
 
-🔗 Jogue Agora: https://nathangch.github.io/termo-pc/
+🔗 Jogue Agora: https://nathangch.github.io/termo4/
 
 🎮 Modos de Jogo
 O Termo Clone desafia seu vocabulário e raciocínio lógico em diferentes níveis de complexidade:
