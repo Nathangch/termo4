@@ -1,43 +1,42 @@
-🧩 Termo Clone – Multimodal Wordle
-Demo License: MIT
+🧩 Termo Clone – Multimodal Wordle Demo License: MIT
 
-Uma recriação sofisticada e completa do popular jogo de palavras Termo (Wordle), desenvolvida inteiramente com tecnologias web puras (HTML, CSS e JavaScript). Este projeto oferece múltiplos modos de jogo, desde o clássico desafio de uma palavra até experiências mais complexas como quarteto, palavras cruzadas avançadas e um modo exclusivo de Sudoku.
+Uma recriação sofisticada e completa do popular jogo de palavras Termo (Wordle), desenvolvida inteiramente com tecnologias web puras (HTML, CSS e JavaScript). Este projeto oferece múltiplos modos de jogo, desde o clássico desafio de uma palavra até experiências mais complexas como quarteto, palavras cruzadas avançadas e um modo exclusivo de Sudoku e agora também um modo de matemática.
 
-🔗 Jogue Agora:
-https://nathangch.github.io/termo-pc/
+🔗 Jogue Agora: https://nathangch.github.io/termo-pc/
 
 🎮 Modos de Jogo
 O Termo Clone desafia seu vocabulário e raciocínio lógico em diferentes níveis de complexidade:
 
-1. 🔤 Clássico (Termo)
-
+🔤 Clássico (Termo)
 O desafio tradicional: adivinhe uma palavra de 5 letras em até 6 tentativas. Feedback visual instantâneo com cores:
 
 🟩 Verde: Letra correta na posição correta.
-
 🟨 Amarelo: Letra existe na palavra, mas em posição diferente.
-
 ⬛ Cinza: Letra não existe na palavra.
 
-2. 👥 Dueto
-
+👥 Dueto
 Tente adivinhar duas palavras ao mesmo tempo. Cada tentativa conta para ambos os tabuleiros, exigindo estratégia e atenção redobradas.
 
-3. 🍀 Quarteto
-
+🍀 Quarteto
 O modo definitivo para mestres das palavras. Adivinhe quatro palavras simultaneamente e gerencie suas tentativas com sabedoria para não ficar sem chances.
 
-4. 📝 Palavras Cruzadas (Crossword)
-
+📝 Palavras Cruzadas (Crossword)
 Um modo interativo onde você preenche uma grade com base em dicas horizontais e verticais. Inclui sistema de auto-avanço, validação de palavras e integração total com o dicionário do jogo.
 
 🔹 Submodo: Cruzadas Exatas
 
 Uma variação avançada das palavras cruzadas onde todas as respostas devem estar perfeitamente corretas para concluir o desafio. Não há aproximações — precisão total é obrigatória.
 
-5. 🧠 Sudoku
-
+🧠 Sudoku
 Um modo de jogo exclusivo que combina lógica pura e raciocínio estratégico. Resolva grades de Sudoku diretamente no navegador, com validação de regras e interface integrada ao estilo visual do Termo Clone.
+
+➕ Modo Matemática (NOVO)
+Um novo desafio para testar seu raciocínio lógico e habilidades com números.
+
+Descubra expressões matemáticas corretas
+Utilize números e operadores para acertar a combinação
+Receba feedback visual no estilo do Termo
+Mistura perfeita entre lógica, cálculo e estratégia
 
 ✨ Características Principais
 
@@ -68,10 +67,8 @@ Clone o repositório:
 
 git clone https://github.com/nathangch/termo-pc.git
 
-
 Navegue até a pasta do projeto:
 
 cd termo-pc
-
 
 Abra o arquivo index.html em seu navegador ou utilize uma extensão como Live Server.
