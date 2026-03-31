@@ -392,17 +392,13 @@ header h1 {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    /* Centraliza verticalmente */
-    flex-grow: 1;
+    justify-content: flex-start; /* Changed from center to allow top alignment when scrolling */
+    flex: 1 1 auto; /* Grow to fill space, shrink if needed, auto basis */
     width: 100%;
-    overflow-y: auto;
-    /* Permite scroll se muito pequeno */
+    overflow-y: auto; /* Allow scrolling inside the game board area */
     padding: 5px;
     padding-bottom: 20px;
-    /* Margem extra no fim */
-    min-height: 0;
-    /* Crítico para flexbox não estourar em conteudos grandes */
+    min-height: 0; /* Crítico para flexbox não estourar em conteudos grandes */
 }
 
 @media (max-width: 600px) {
@@ -602,11 +598,11 @@ header h1 {
 
 /* Teclado Virtual */
 #keyboard-container {
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     width: 100%;
     max-width: 650px;
-    padding: 0 10px;
-    flex-shrink: 0;
+    padding: 0 5px;
+    flex: 0 0 auto; /* Never shrink or grow, keep fixed height footprint */
 }
 
 #keyboard {
