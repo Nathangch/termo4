@@ -40,9 +40,11 @@ body {
     justify-content: flex-start;
     height: 100%;
     height: 100dvh;
-    min-height: 100vh;
+    width: 100%;
+    margin: 0;
+    padding: 0;
     overflow: hidden;
-    overflow-x: hidden;
+    position: fixed; /* Previne scroll do body no Safari iOS */
 }
 
 /* Header */
@@ -1286,18 +1288,23 @@ header h1 {
     }
 
     .boards-1 {
-        --block-size: min(55px, 7.5vh, 14vw);
-        --gap-size: 4px;
-        --font-size-tile: 1.6rem;
+        --block-size: min(50px, 7vh, 13vw);
+        --gap-size: 3px;
+        --font-size-tile: 1.4rem;
     }
 
     #keyboard-container {
-        margin-bottom: 2px;
+        margin-bottom: 0;
+        padding-bottom: 5px;
+    }
+
+    #keyboard {
+        gap: 3px;
     }
 
     .key {
-        height: min(40px, 7vh);
-        font-size: 0.9rem;
+        height: min(38px, 6.5vh);
+        font-size: 0.85rem;
     }
 }
 
