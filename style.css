@@ -59,6 +59,13 @@ header {
     background-color: #000;
 }
 
+@media (max-width: 600px) {
+    header {
+        height: 45px;
+        padding: 5px 10px;
+    }
+}
+
 header h1 {
     font-size: 2rem;
     letter-spacing: 4px;
@@ -394,6 +401,12 @@ header h1 {
     /* Margem extra no fim */
     min-height: 0;
     /* Crítico para flexbox não estourar em conteudos grandes */
+}
+
+@media (max-width: 600px) {
+    #game-container {
+        padding-bottom: 5px;
+    }
 }
 
 #boards-container {
@@ -1273,18 +1286,18 @@ header h1 {
     }
 
     .boards-1 {
-        --block-size: min(60px, 8vh, 15vw);
+        --block-size: min(55px, 7.5vh, 14vw);
         --gap-size: 4px;
-        --font-size-tile: 1.8rem;
+        --font-size-tile: 1.6rem;
     }
 
     #keyboard-container {
-        margin-bottom: 5px;
+        margin-bottom: 2px;
     }
 
     .key {
-        height: min(45px, 8vh);
-        font-size: 0.95rem;
+        height: min(40px, 7vh);
+        font-size: 0.9rem;
     }
 }
 
