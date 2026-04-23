@@ -432,6 +432,7 @@ class Game {
     }
 
     restoreDailyGuesses(guesses) {
+        this.isRestoring = true;
         guesses.forEach(guess => {
             // Fill boards state manually
             this.boards.forEach(board => {
@@ -445,6 +446,7 @@ class Game {
             this.processTurn(guess, false); // Add 'animate' param to processTurn
         });
         this.checkGameState();
+        this.isRestoring = false;
     }
 
     generateMathEquation() {
@@ -1308,9 +1310,11 @@ class Game {
         }
 
         let msg = win ? "Fantástico! 🎉" : "Fim de jogo!";
-        showMessage(msg);
+        if (!this.isRestoring) {
+            showMessage(msg);
+        }
 
-        if (!win) {
+        if (!win && !this.isRestoring) {
             // Mostra palavras que faltaram
             setTimeout(() => {
                 this.boards.filter(b => !b.isSolved).forEach(b => {
@@ -1320,12 +1324,15 @@ class Game {
         }
 
         setTimeout(() => {
-            this.renderStats();
-            openModal('stats-modal');
+            if (!this.isRestoring) {
+                this.renderStats();
+                openModal('stats-modal');
+            }
         }, 2500);
     }
 
     updateStats(win) {
+        if (this.isRestoring) return;
         const s = this.stats[this.mode];
         s.played++;
 
