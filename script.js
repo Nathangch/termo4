@@ -1332,22 +1332,14 @@ class Game {
     }
 
     updateStats(win) {
-        console.log("updateStats called. isRestoring:", this.isRestoring, "playStyle:", this.playStyle, "mode:", this.mode);
-        if (this.isRestoring) {
-            console.log("Returning early: isRestoring is true");
-            return;
-        }
+        if (this.isRestoring) return;
 
+        // Extra protection for daily mode: don't count if already finished today
         if (this.playStyle === 'daily') {
             const state = this.dailyState.modes[this.mode];
-            console.log("Daily state status:", state ? state.status : "undefined");
-            if (state && state.status !== 'playing') {
-                console.log("Returning early: daily status is not playing");
-                return;
-            }
+            if (state && state.status !== 'playing') return;
         }
 
-        console.log("Incrementing stats...");
         const s = this.stats[this.mode];
         s.played++;
 
@@ -2155,87 +2147,6 @@ class Game {
             keyBtn.classList.remove('present', 'absent', 'correct');
             keyBtn.classList.add(status);
         }
-    }
-
-    handleEndGame(win) {
-        this.isGameOver = true;
-        // Assuming updateFocus is a method that clears active focus for the current game mode
-        // If this is for crossword, it might be updateCrosswordFocus or similar.
-        // For now, I'll assume it's a generic method or needs to be adapted.
-        // If this is for Termo, it would be this.boards.forEach(b => b.updateFocus());
-        // Since this is a crossword context, I'll comment it out or adapt if a clear equivalent exists.
-        // this.updateFocus(); // Clear active-focus
-
-        if (win) {
-            showMessage("Parabéns!");
-            this.stats[this.mode].won++;
-            this.stats[this.mode].streak++;
-            if (this.stats[this.mode].streak > this.stats[this.mode].maxStreak) {
-                this.stats[this.mode].maxStreak = this.stats[this.mode].streak;
-            }
-            // This part seems specific to Termo (boards, currentRow, dist by attempts)
-            // For crossword, 'attempts' might be different or not applicable in the same way.
-            // I'll keep it as is, assuming 'boards[0]' refers to the primary game board if multiple exist.
-            // If this is purely crossword, this logic needs re-evaluation.
-            const attempts = this.boards && this.boards[0] ? this.boards[0].currentRow + 1 : 1; // Placeholder for crossword
-            this.stats[this.mode].dist[attempts] = (this.stats[this.mode].dist[attempts] || 0) + 1;
-        } else {
-            // This part also seems Termo-specific (secrets from boards)
-            const secrets = this.boards ? this.boards.filter(b => !b.isSolved).map(b => b.secretWord).join(", ") : "a palavra"; // Placeholder for crossword
-            showMessage(`Fim de jogo! As palavras eram: ${secrets}`, 5000);
-            this.stats[this.mode].streak = 0;
-            this.stats[this.mode].dist.fail++;
-        }
-        this.stats[this.mode].played++;
-        this.saveStats();
-
-        setTimeout(() => {
-            this.renderStats();
-            openModal('stats-modal');
-        }, 1500);
-    }
-
-    shakeActiveRows() {
-        // This method seems specific to Termo (shaking rows on multiple boards)
-        // For crossword, it might apply to the current active word or cell.
-        // I'll keep the original implementation, assuming 'boards' might exist in a hybrid game.
-        this.boards.forEach(board => {
-            if (!board.isSolved && !board.isFailed) {
-                const row = board.element.querySelectorAll('.row')[board.currentRow];
-                if (row) {
-                    row.classList.add('invalid');
-                    setTimeout(() => row.classList.remove('invalid'), 500);
-                }
-            }
-        });
-    }
-
-    startCountdown() {
-        const el = document.getElementById('countdown');
-        if (!el) return;
-        const update = () => {
-            const now = new Date();
-            const tomorrow = new Date(now);
-            tomorrow.setHours(24, 0, 0, 0);
-            const diff = tomorrow - now;
-            const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
-            const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
-            const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
-            el.textContent = `${h}:${m}:${s}`;
-        };
-        update();
-        if (this.timerInterval) clearInterval(this.timerInterval);
-        this.timerInterval = setInterval(update, 1000);
-    }
-
-    shareResult() {
-        let text = `Termo Clone (${this.mode}x) ${this.stats[this.mode].played}\n`;
-        // Gerar emojis simplificados do último jogo seria complexo sem histórico salvo turno a turno
-        // Vou colocar apenas resumo.
-        text += this.isGameOver ? "Concluído!" : "Jogando...";
-        navigator.clipboard.writeText(text).then(() => {
-            alert("Resultado copiado!");
-        });
     }
 
     // --- Sudoku Methods ---
