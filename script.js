@@ -1333,6 +1333,13 @@ class Game {
 
     updateStats(win) {
         if (this.isRestoring) return;
+
+        // Extra protection for daily mode: don't count if already finished today
+        if (this.playStyle === 'daily') {
+            const state = this.dailyState.modes[this.mode];
+            if (state && state.status !== 'playing') return;
+        }
+
         const s = this.stats[this.mode];
         s.played++;
 
