@@ -1220,29 +1220,8 @@ header h1 {
         max-width: 500px;
     }
 
-    /* Mirror the floating hints button with a floating confirmation button on the left */
+    /* Hide confirmation button completely on mobile, use ENTER instead */
     #header-finish-btn {
-        position: fixed !important;
-        left: 20px !important;
-        top: 90px !important;
-        width: 45px !important;
-        height: 45px !important;
-        border-radius: 50% !important;
-        background: var(--color-correct) !important;
-        color: #fff !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
-        z-index: 999 !important;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.4rem !important;
-        border: 2px solid rgba(255,255,255,0.2) !important;
-        cursor: pointer !important;
-        padding: 0 !important;
-        margin: 0 !important;
-    }
-
-    body[data-mode="sudoku"] #header-finish-btn {
         display: none !important;
     }
 
