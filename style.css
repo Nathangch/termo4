@@ -1242,6 +1242,10 @@ header h1 {
         margin: 0 !important;
     }
 
+    body[data-mode="sudoku"] #header-finish-btn {
+        display: none !important;
+    }
+
     .cw-hints-panel {
         max-height: 300px;
         width: 100%;

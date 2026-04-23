@@ -222,6 +222,8 @@ class Game {
 
         if (this.mode === 'math') this.maxAttempts = 6;
 
+        document.body.dataset.mode = this.mode;
+
         // Update Header Title
         const headerTitle = document.querySelector('header h1');
         const finishBtn = document.getElementById('header-finish-btn');
