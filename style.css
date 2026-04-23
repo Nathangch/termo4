@@ -382,9 +382,7 @@ header h1 {
 }
 
 #header-finish-btn {
-    border-color: var(--color-correct);
-    color: var(--color-correct);
-    font-size: 1.4rem;
+    display: none !important;
 }
 
 /* Game Container - Layout Dinâmico */
