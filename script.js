@@ -1332,14 +1332,22 @@ class Game {
     }
 
     updateStats(win) {
-        if (this.isRestoring) return;
-
-        // Extra protection for daily mode: don't count if already finished today
-        if (this.playStyle === 'daily') {
-            const state = this.dailyState.modes[this.mode];
-            if (state && state.status !== 'playing') return;
+        console.log("updateStats called. isRestoring:", this.isRestoring, "playStyle:", this.playStyle, "mode:", this.mode);
+        if (this.isRestoring) {
+            console.log("Returning early: isRestoring is true");
+            return;
         }
 
+        if (this.playStyle === 'daily') {
+            const state = this.dailyState.modes[this.mode];
+            console.log("Daily state status:", state ? state.status : "undefined");
+            if (state && state.status !== 'playing') {
+                console.log("Returning early: daily status is not playing");
+                return;
+            }
+        }
+
+        console.log("Incrementing stats...");
         const s = this.stats[this.mode];
         s.played++;
 
