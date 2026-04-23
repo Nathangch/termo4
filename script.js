@@ -72,7 +72,7 @@ class Board {
     }
 
     // Retorna o resultado da avaliação dessa linha
-    checkRow(wordGuess) {
+    checkRow(wordGuess, animate = true) {
         if (this.isSolved || this.isFailed) return null; // Não processa
 
         const secretChars = this.secretWord.split("");
@@ -100,13 +100,21 @@ class Board {
         // Aplica visual
         const rowToUpdate = this.currentRow;
         guessChars.forEach((char, i) => {
-            setTimeout(() => {
+            const updateTile = () => {
                 const tile = document.getElementById(`tile-${this.id}-${rowToUpdate}-${i}`);
                 if (tile) {
-                    tile.classList.add('flip', results[i]);
+                    if (animate) tile.classList.add('flip');
+                    tile.classList.add(results[i]);
                     tile.removeAttribute('data-status');
+                    tile.textContent = char; // Ensure text is set during restoration
                 }
-            }, i * 250);
+            };
+
+            if (animate) {
+                setTimeout(updateTile, i * 250);
+            } else {
+                updateTile();
+            }
         });
 
         return results;
@@ -149,6 +157,8 @@ class Game {
         this.boards = [];
         this.currentCol = 0;
         this.isGameOver = false;
+        this.playStyle = 'daily'; // 'daily' or 'training'
+        this.dailyState = this.loadDailyState();
         this.stats = this.loadStats();
         this.usedCrosswordWords = new Set();
         // Crossword / Exact specific state
@@ -191,6 +201,48 @@ class Game {
 
     saveStats() {
         localStorage.setItem('termoMultiStats', JSON.stringify(this.stats));
+    }
+
+    loadDailyState() {
+        const today = new Date();
+        // Uses local date string YYYY-MM-DD
+        const dateString = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+        
+        const defaultState = {
+            date: dateString,
+            modes: {
+                1: { status: 'playing', guesses: [] },
+                2: { status: 'playing', guesses: [] },
+                4: { status: 'playing', guesses: [] },
+                'math': { status: 'playing', guesses: [] }
+            }
+        };
+
+        const stored = localStorage.getItem('termoDailyState');
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed.date === dateString) {
+                return { ...defaultState, modes: { ...defaultState.modes, ...parsed.modes } };
+            }
+        }
+        return defaultState;
+    }
+
+    saveDailyState() {
+        localStorage.setItem('termoDailyState', JSON.stringify(this.dailyState));
+    }
+
+    getDailyIndex(arrayLength, offset = 0) {
+        const today = new Date();
+        const dateStr = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+        // Simple hash for deterministic indexing
+        let hash = 0;
+        const seedStr = dateStr + offset;
+        for (let i = 0; i < seedStr.length; i++) {
+            hash = ((hash << 5) - hash) + seedStr.charCodeAt(i);
+            hash |= 0;
+        }
+        return Math.abs(hash) % arrayLength;
     }
 
     setMode(n) {
@@ -245,8 +297,14 @@ class Game {
         // Manage Header Selectors Visibility
         const termoSelector = document.getElementById('termo-selector');
         const cwSelector = document.getElementById('crossword-selector');
+        const playModeSelector = document.getElementById('play-mode-selector');
         const isCrossword = this.mode === 'crossword' || this.mode === 'exact-crossword';
         const isTermo = typeof this.mode === 'number';
+        
+        if (playModeSelector) {
+            const supportsPlayMode = isTermo || this.mode === 'math';
+            playModeSelector.classList.toggle('hidden', !supportsPlayMode);
+        }
 
         if (termoSelector) termoSelector.classList.toggle('hidden', isCrossword || this.mode === 'sudoku' || this.mode === 'math');
         if (cwSelector) {
@@ -321,7 +379,13 @@ class Game {
         // Ajusta classes de CSS container
         if (this.mode === 'math') {
             this.boardsContainer.className = 'boards-math';
-            const secret = this.generateMathEquation();
+            let secret;
+            if (this.playStyle === 'daily') {
+                const pool = this.getMathPool();
+                secret = pool[this.getDailyIndex(pool.length, 'math')].toUpperCase();
+            } else {
+                secret = this.generateMathEquation();
+            }
             console.log("Math Secret:", secret);
             const board = new Board(0, 6, secret, 8);
             board.render(this.boardsContainer);
@@ -331,7 +395,12 @@ class Game {
 
             // Cria boards
             for (let i = 0; i < this.mode; i++) {
-                const secret = normalizeWord(WORDS[Math.floor(Math.random() * WORDS.length)]);
+                let secret;
+                if (this.playStyle === 'daily') {
+                    secret = normalizeWord(WORDS[this.getDailyIndex(WORDS.length, `mode-${this.mode}-board-${i}`)]);
+                } else {
+                    secret = normalizeWord(WORDS[Math.floor(Math.random() * WORDS.length)]);
+                }
                 console.log(`Board ${i} Secret:`, secret);
                 const board = new Board(i, this.maxAttempts, secret);
                 board.render(this.boardsContainer);
@@ -341,7 +410,41 @@ class Game {
 
         this.createKeyboard();
         this.updateFocus();
+
+        // Restore Daily State if applicable
+        if (this.playStyle === 'daily') {
+            const state = this.dailyState.modes[this.mode];
+            if (state && state.guesses.length > 0) {
+                this.restoreDailyGuesses(state.guesses);
+            }
+        }
+
         this.startCountdown();
+    }
+
+    getMathPool() {
+        return [
+            "12+3-8=7", "4*6-3=21", "18/2-3=6", "98-25=73", "88-25=63",
+            "45+32=77", "9*8-12=60", "50/5+2=12", "100/4=25", "7*7+1=50",
+            "3+4*5=23", "15+15=30", "99-11=88", "12*4+2=50", "81/9+1=10",
+            "10*5-1=49", "6*6+4=40", "2+3*4=14", "20/4+5=10", "15-3*4=3"
+        ].filter(eq => eq.length === 8);
+    }
+
+    restoreDailyGuesses(guesses) {
+        guesses.forEach(guess => {
+            // Fill boards state manually
+            this.boards.forEach(board => {
+                if (!board.isSolved && !board.isFailed) {
+                    for (let c = 0; c < board.COLS; c++) {
+                        board.gridState[board.currentRow][c] = guess[c];
+                    }
+                }
+            });
+            // Process turn WITHOUT animations or global state checks until end
+            this.processTurn(guess, false); // Add 'animate' param to processTurn
+        });
+        this.checkGameState();
     }
 
     generateMathEquation() {
@@ -532,6 +635,28 @@ class Game {
 
     initListeners() {
         document.addEventListener('keydown', (e) => this.handlePhysicalKeyboard(e));
+
+        const btnDaily = document.getElementById('btn-daily');
+        const btnTraining = document.getElementById('btn-training');
+        
+        if (btnDaily && btnTraining) {
+            btnDaily.addEventListener('click', () => {
+                if (this.playStyle !== 'daily') {
+                    this.playStyle = 'daily';
+                    btnDaily.classList.add('active');
+                    btnTraining.classList.remove('active');
+                    this.startNewGame();
+                }
+            });
+            btnTraining.addEventListener('click', () => {
+                if (this.playStyle !== 'training') {
+                    this.playStyle = 'training';
+                    btnTraining.classList.add('active');
+                    btnDaily.classList.remove('active');
+                    this.startNewGame();
+                }
+            });
+        }
 
         // Toggle Menu
         const toggleBtn = document.getElementById('mode-toggle');
@@ -1093,15 +1218,22 @@ class Game {
         return WORDS_DATA.some(w => normalizeWord(w) === normalized);
     }
 
-    processTurn(guessWord) {
+    processTurn(guessWord, animate = true) {
+        // Save to daily state if in daily mode and it's a real turn (not restoration)
+        if (this.playStyle === 'daily' && animate) {
+            const state = this.dailyState.modes[this.mode];
+            if (state && !state.guesses.includes(guessWord)) {
+                state.guesses.push(guessWord);
+                this.saveDailyState();
+            }
+        }
+
         // 1. Check Visual Results para cada board
         const allKeyStatuses = {}; // Para atualizar teclado: letra -> status (priority)
 
-        let pendingAnimations = 0;
-
         this.boards.forEach(board => {
             if (!board.isSolved && !board.isFailed) {
-                const results = board.checkRow(guessWord);
+                const results = board.checkRow(guessWord, animate);
 
                 // Coleta cores para o teclado
                 guessWord.split("").forEach((char, i) => {
@@ -1115,14 +1247,11 @@ class Game {
                 });
 
                 // Finaliza logicalmente a linha (incrementa row)
-                // Precisamos esperar a animação antes de checar game over?
-                // Visualmente sim.
                 board.finalizeRow(guessWord);
             }
         });
 
-        // 2. Atualiza Teclado após animações
-        setTimeout(() => {
+        const finalizeTurn = () => {
             Object.keys(allKeyStatuses).forEach(char => {
                 this.updateKeyboardColor(char, allKeyStatuses[char]);
             });
@@ -1132,9 +1261,17 @@ class Game {
             this.updateFocus();
 
             // 4. Check Global Game State
-            this.checkGameState();
+            if (animate) {
+                this.checkGameState();
+            }
+        };
 
-        }, 5 * 250 + 200);
+        // 2. Atualiza Teclado após animações
+        if (animate) {
+            setTimeout(finalizeTurn, 5 * 250 + 200);
+        } else {
+            finalizeTurn();
+        }
     }
 
     checkGameState() {
@@ -1161,6 +1298,14 @@ class Game {
     handleEndGame(win) {
         this.isGameOver = true;
         this.updateStats(win);
+
+        if (this.playStyle === 'daily') {
+            const state = this.dailyState.modes[this.mode];
+            if (state) {
+                state.status = win ? 'won' : 'lost';
+                this.saveDailyState();
+            }
+        }
 
         let msg = win ? "Fantástico! 🎉" : "Fim de jogo!";
         showMessage(msg);
